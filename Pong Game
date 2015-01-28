@@ -1,0 +1,330 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Pong: RELOADED</title>
+    <style type="text/css">
+        canvas { border: 3px solid black; }
+    </style>
+
+    <script type="text/javascript">
+
+        // Global variable here
+        var x = 250;
+        var y = 250;
+        var dx = 0;
+        var dy = 0;
+        var temp = 0;
+
+        var px = 250;
+        var py = 150;
+        var pdx = 0;
+        var powerUpPresent = false;
+
+        var WIDTH;
+        var HEIGHT;
+        var ctx;
+        var interval =10;
+        var canvas;
+        var intervalId = 0;
+
+        var gameScoreP = 0;
+        var gameScoreC = 0;
+
+        var paddle1Y;
+        var paddle1h;
+        var paddle1w;
+
+        var paddle2Y;
+        var paddle2h;
+        var paddle2w;
+        var paddle2dy = 2;
+
+        var easy = true;
+        var expert = false;
+
+        var rightDown = false;
+        var leftDown = false;
+
+        var spaceDown = false;
+
+        function onKeyDown(evt)
+        {
+            if (evt.keyCode == 39)
+                rightDown = true;
+            else if (evt.keyCode == 37)
+                leftDown = true;
+        }
+
+        function onKeyUp(evt)
+        {
+            if (evt.keyCode == 39)
+                rightDown = false;
+            else if (evt.keyCode == 37)
+                leftDown = false;
+        }
+
+        function onSpaceBarDown(evt)
+        {
+            if (evt.keyCode == 32)
+                spaceDown = true;
+        }
+
+        function onSpaceBarUp(evt)
+        {
+            if (evt.keyCode == 32)
+                spaceDown = false;
+        }
+
+        function init()
+        {
+            ctx = document.getElementById('canvas').getContext('2d');
+            canvas = document.getElementById('canvas');
+
+            WIDTH = ctx.canvas.width; // not with the canvas 'variable'
+            HEIGHT = ctx.canvas.height;
+
+            init_paddle1();
+            init_paddle2();
+
+            window.addEventListener('keydown', onSpaceBarDown, true);
+            window.addEventListener('keyup', onSpaceBarUp, true);
+
+            // call setInterval to request browser to run function every 10 milliseconds
+            setInterval( draw, interval );
+        }
+
+        function circle( x,y,r )
+        {
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI*2, true);
+            ctx.closePath();
+            ctx.fillStyle="#000000";
+            ctx.fill();
+        }
+
+        function powerUpSpawn(x, y, r)
+        {
+            powerUpPresent = true;
+            pdx = -1;
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI*2, true);
+            ctx.closePath();
+            ctx.fillStyle="#FF0000";
+            ctx.fill();
+        }
+
+        function rect(x,y,w,h)
+        {
+            ctx.beginPath();
+            ctx.rect(x,y,w,h);
+            ctx.closePath();
+            ctx.fillStyle="#000000";
+            ctx.fill();
+        }
+
+        function clear()
+        {
+            ctx.clearRect(0, 0, WIDTH, HEIGHT);
+        }
+
+        function moveTheBall()
+        {
+            if (gameScoreP > gameScoreC) {
+                dx = 2;
+                dy = -3;
+                temp = -3;
+            }
+            if (gameScoreC > gameScoreP){
+                dx = -2;
+                dy = 3;
+                temp = 3;
+            }
+            else if (gameScoreP == gameScoreC)
+            {
+                dx = 2;
+                dy = 3;
+                temp = 3;
+            }
+        }
+
+        function init_paddle1()
+        {
+            paddle1Y = HEIGHT / 2;
+            paddle1h = 100;
+            paddle1w = 10;
+
+            this.addEventListener( 'keydown',onKeyDown,true );
+            this.addEventListener( 'keyup',onKeyUp,true );
+        }
+
+        function init_paddle2()
+        {
+            paddle2Y = HEIGHT / 2;
+            paddle2h = 100;
+            paddle2w = 10;
+        }
+
+        function easyDiff(){
+            easy = true;
+            expert = false;
+        }
+
+        function expertDiff(){
+            easy = false;
+            expert = true;
+        }
+
+
+        function draw() {
+            clear();
+            circle(x, y, 10);
+
+            if (powerUpPresent){
+                powerUpSpawn(px, py, 20);
+            }
+
+            ctx.font="30px Georgia";
+            ctx.fillStyle="#0000FF";
+            ctx.fillText(gameScoreP, 190, 50);
+            ctx.font="30px Georgia";
+            ctx.fillStyle="#0000FF";
+            ctx.fillText(gameScoreC, 300, 50);
+
+            //*** MOVE the paddle if left or right is currently pressed
+            if (rightDown) paddle1Y += 5;
+            else if (leftDown) paddle1Y -= 5;
+
+            //If the paddle hits the edges of the screen
+            if (paddle1Y - (paddle1h/2) < 0)
+                paddle1Y += 5;
+            else if (paddle1Y + (paddle1h/2) > HEIGHT)
+                paddle1Y -= 5;
+
+            //If the paddle hits the edges of the screen
+            if (paddle2Y - (paddle2h/2) < 0 || paddle2Y + (paddle2h/2) > HEIGHT)
+                paddle2dy = -paddle2dy;
+
+            // paddle1:
+            // right most, bottom and upwards, width and height
+            rect(0, (paddle1Y - (paddle1h / 2)), paddle1w, paddle1h);
+
+            // paddle2:
+            // right most, bottom and upwards, width and height
+            rect(WIDTH - paddle2w, (paddle2Y - (paddle2h / 2)), paddle2w, paddle2h);
+
+            // Ball Collisions*********************************************
+            //ceiling
+            if (y + dy < 0) {
+                dy = -dy;
+            }
+
+            //floor
+            if (y + dy > HEIGHT ){
+                dy = -dy;
+            }
+
+            //scored on Player
+            if (x + dx < 0){
+                x = 250;
+                y = 250;
+                dx = 0;
+                dy = 0;
+                gameScoreC++;
+            }
+
+            //scored on Computer
+            if (x + dx > WIDTH){
+                x = 250;
+                y = 250;
+                dx = 0;
+                dy = 0;
+                gameScoreP++;
+            }
+
+            //Hit player's paddle
+            if (x + dx < paddle1w) {
+                if (y > (paddle1Y - (paddle1h/2)) && y < (paddle1Y + (paddle1h/2))) {
+                    dx = -dx;
+                }
+            }
+
+            //Hit computer's paddle
+            if (x + dx > (WIDTH - paddle2w)) {
+                if (y > (paddle2Y - (paddle2h/2)) && y < (paddle2Y + (paddle2h/2))) {
+                    dx = -2;
+                    dy = 3;
+                }
+            }
+
+            // Power up collisions**********************************************
+            //Collide with player paddle
+            if (px + pdx < (paddle1w+10)) {
+                if (py > (paddle1Y - (paddle1h/2)) && py < (paddle1Y + (paddle1h/2))) {
+                    paddle1h = paddle1h * 1.5;
+                    powerUpPresent = false;
+                    pdx = 0;
+                    px = 250;
+                }
+            }
+
+            //Leaves the canvas
+            if (px + pdx < (0 - 10)){
+                powerUpPresent = false;
+                pdx = 0;
+                px = 250;
+            }
+
+            // Win Conditions**************************************************
+            if (gameScoreP == 5) {
+                clear();
+                ctx.font = "30px Helvetica";
+                ctx.fillText("BRO, YOU DID IT", 140, 250);
+                ctx.fillText("Refresh to start again!", 120, 350);
+            }
+
+            if (gameScoreC == 5) {
+                clear();
+                ctx.font = "30px Helvetica";
+                ctx.fillText("BRO, YOU LOST", 140, 250);
+                ctx.fillText("Refresh to start again!", 120, 350);
+            }
+
+            x += dx;
+            y += dy;
+            px += pdx;
+
+            // Difficulties
+            if (easy){
+                paddle2Y += paddle2dy;
+            }
+
+            if (expert && !((y - (paddle2h/2) < 0 || y + (paddle2h/2) > HEIGHT))){
+                paddle2Y = y;
+            }
+
+            //SUPER SECRET THING HAHAHAHAHAHA**************************************
+            if (x < paddle1w + 10 && (y > (paddle1Y - (paddle1h/2)) && y < (paddle1Y + (paddle1h/2))) && (spaceDown)){
+                dx = dx*1.5;
+                dy = dy*1.5;
+            }
+        }
+
+
+    </script>
+</head>
+
+<!-- HERE we add an explicit call to the draw() function -->
+<body onload="init()">
+<h1>Pong: RELOADED</h1>
+<hr />
+<canvas id="canvas" width="500" height="500">
+    Your browser does not support the canvas element.
+</canvas>
+<button onclick="moveTheBall()">Start the ball up!</button>
+<button onclick="powerUpSpawn()">Spawn a powerup!</button>
+<button onclick="easyDiff()">Beginner Difficulty</button>
+<button onclick="expertDiff()">Expert Difficulty</button>
+</body>
+</html>
