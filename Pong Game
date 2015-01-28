@@ -18,7 +18,7 @@
         var temp = 0;
 
         var px = 250;
-        var py = 150;
+        var py = Math.floor((Math.random() * 300) + 100);
         var pdx = 0;
         var powerUpPresent = false;
 
